@@ -1097,6 +1097,10 @@ def _is_new_style_class(cls):
 def _is_type(obj):
     return issubclass(obj, type)
 
+def _is_exception(obj):
+    return issubclass(obj, Exception)
+
+
 def whichmodule(obj):
     """Find the module an object belong to."""
     module_name = getattr(obj, '__module__', None)
