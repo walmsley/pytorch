@@ -649,12 +649,21 @@ struct SimpleSelf : public Self {
   ClassTypePtr classType_;
 };
 
-struct TORCH_API ExceptionMessageValue : public SimpleValue {
-  ExceptionMessageValue(Value* value) : SimpleValue(value) {}
+
+// This is not a SimpleValue so it can pass through the code paths
+// that expect a SimpleValue as a sugared value
+struct TORCH_API ExceptionMessageValue : public SugaredValue {
+  ExceptionMessageValue(Value* value) : value_(value) {}
 
   std::string kind() const override {
     return "exception message";
   }
+
+  Value* getValue() {
+    return value_;
+  }
+
+  Value* value_;
 };
 
 

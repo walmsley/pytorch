@@ -532,11 +532,15 @@ std::shared_ptr<SugaredValue> PythonExceptionValue::call(
     at::ArrayRef<NamedValue> inputs,
     at::ArrayRef<NamedValue> attributes,
     size_t n_binders) {
-  if (inputs.size() != 1) {
-    std::cout << "exceptions in TorchScript only support"
-                 " construction with 1 message argument\n";
+  Value* message;
+  if (inputs.size() == 0) {
+    message = insertConstant(*caller.graph(), "", loc);
+  } else if (inputs.size() == 1) {
+    message = inputs.at(0).value(*caller.graph());
+  } else {
+    throw ErrorReport(loc) << "exceptions in TorchScript only support"
+                 " construction with at most 1 message argument\n";
   }
-  auto message = inputs.at(0).value(*caller.graph());
   return std::make_shared<ExceptionMessageValue>(message);
 }
 

@@ -1725,19 +1725,29 @@ struct to_ir {
   //
   // We ignore the expression following raise
   void emitRaise(const Raise& raise) {
-    // const std::string exception = "AssertionError";
-    // if (!raise.expr().present()) {
-    //   throw ErrorReport(raise.range()) << "Exceptect message";
-    // }
     auto sv = emitSugaredExpr(raise.expr(), 1);
     auto exception_sv = std::dynamic_pointer_cast<ExceptionMessageValue>(sv);
     if (exception_sv == nullptr) {
+      // auto simple_sv = std::dynamic_pointer_cast<SimpleValue>(sv);
+      // if (simple_sv != nullptr) {
+      //   std::cout << *method.graph() << "\n";
+      //   std::cout << "Its a simple\n";
+      // }
       // The raise was not followed by an exception (i.e. it was something like
       // `raise "error"` instead of `raise RuntimeError("error")`)
       throw ErrorReport(raise.range())
-          << "exceptions  must derive from BaseException";
+          << "exceptions must derive from BaseException";
     }
-    auto value = sv->asValue(raise.range(), method);
+
+    Value* value = exception_sv->getValue();
+
+    // TODO: Fix hack (some things like `ValueError` can take non-string arguments)
+    // Since exceptions are still sugared values and don't have an `attr()` defined,
+    // this should be ok for now
+    if (!value->type()->isSubtypeOf(StringType::get())) {
+      value = graph->insert(aten::str, {value});
+    }
+
     graph->insert(prim::RaiseException, {value}, {}, raise.range());
     exit_blocks.insert(environment_stack->block());
   }
